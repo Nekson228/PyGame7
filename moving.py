@@ -43,6 +43,23 @@ class Player(pygame.sprite.Sprite):
             self.rect.y -= y
 
 
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
+
+
 def terminate():
     pygame.quit()
     sys.exit()
@@ -125,9 +142,10 @@ if __name__ == '__main__':
     start_screen()
     pygame.quit()
     level = load_level(input('Введите название текстового файла с картой уровня: '))
-    size = width, height = len(level[0]) * tile_width, len(level) * tile_height
+    size = width, height = 400, 400
     screen = pygame.display.set_mode(size)
     player, level_x, level_y = generate_level(level)
+    camera = Camera()
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -145,4 +163,9 @@ if __name__ == '__main__':
         keys = pygame.key.get_pressed()
         screen.fill(pygame.Color('black'))
         all_sprites.draw(screen)
+        # изменяем ракурс камеры
+        camera.update(player)
+        # обновляем положение всех спрайтов
+        for sprite in all_sprites:
+            camera.apply(sprite)
         pygame.display.flip()
