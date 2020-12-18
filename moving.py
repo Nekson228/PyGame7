@@ -6,7 +6,7 @@ WIDTH, HEIGHT = 1280, 770
 
 
 def generate_level(level):
-    new_player, x, y = None, None, None
+    new_player, x, y, player_x, player_y = None, None, None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '.':
@@ -17,7 +17,7 @@ def generate_level(level):
                 Tile('empty', x, y)
                 player_x, player_y = x, y
     new_player = Player(player_x, player_y)
-    return new_player, x, y
+    return new_player
 
 
 class Tile(pygame.sprite.Sprite):
@@ -43,33 +43,19 @@ class Player(pygame.sprite.Sprite):
             self.rect.y -= y
 
 
-class Camera:
-    # зададим начальный сдвиг камеры
-    def __init__(self):
-        self.dx = 0
-        self.dy = 0
-
-    # сдвинуть объект obj на смещение камеры
-    def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
-
-    # позиционировать камеру на объекте target
-    def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
-        self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
-
-
 def terminate():
     pygame.quit()
     sys.exit()
 
 
 def start_screen():
-    intro_text = ["ЗАСТАВКА", "",
-                  "Правила игры",
-                  "Если в правилах несколько строк,",
-                  "приходится выводить их построчно"]
+    intro_text = [
+        "ЗАСТАВКА",
+        "",
+        "Правила игры",
+        "Если в правилах несколько строк,",
+        "приходится выводить их построчно"
+    ]
 
     fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
@@ -118,9 +104,35 @@ def load_image(name, colorkey=None):
     return image
 
 
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+        self.target = player
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+        if obj.rect.x < -2:
+            obj.rect.x += width
+        elif obj.rect.x + tile_width > width - 2:
+            obj.rect.x -= width
+        if obj.rect.y < 0:
+            obj.rect.y += height
+        elif obj.rect.y + tile_height > height:
+            obj.rect.y -= height
+
+    # позиционировать камеру на объекте target
+    def update(self):
+        self.dx = -(self.target.rect.x + self.target.rect.w // 2 - width // 2)
+        self.dy = -(self.target.rect.y + self.target.rect.h // 2 - height // 2)
+
+
 if __name__ == '__main__':
     pygame.init()
-    FPS = 50
+    FPS = 60
     tile_images = {
         'wall': load_image('box.png'),
         'empty': load_image('grass.png')
@@ -141,10 +153,10 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     start_screen()
     pygame.quit()
-    level = load_level(input('Введите название текстового файла с картой уровня: '))
-    size = width, height = 400, 400
+    level = load_level('map.txt')  # input('Введите название текстового файла с картой уровня: ')
+    size = width, height = 550, 550
     screen = pygame.display.set_mode(size)
-    player, level_x, level_y = generate_level(level)
+    player = generate_level(level)
     camera = Camera()
     while True:
         for event in pygame.event.get():
@@ -162,10 +174,10 @@ if __name__ == '__main__':
 
         keys = pygame.key.get_pressed()
         screen.fill(pygame.Color('black'))
-        all_sprites.draw(screen)
         # изменяем ракурс камеры
-        camera.update(player)
+        camera.update()
         # обновляем положение всех спрайтов
         for sprite in all_sprites:
             camera.apply(sprite)
+        all_sprites.draw(screen)
         pygame.display.flip()
