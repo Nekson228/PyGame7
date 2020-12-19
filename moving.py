@@ -153,7 +153,7 @@ if __name__ == '__main__':
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     start_screen()
     pygame.quit()
-    level = load_level('map.txt')  # input('Введите название текстового файла с картой уровня: ')
+    level = load_level(input('Введите название текстового файла с картой уровня: '))
     size = width, height = 550, 550
     screen = pygame.display.set_mode(size)
     player = generate_level(level)
